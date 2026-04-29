@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Key Event Attribution Report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  :root {
+    --bg: #0a0e17;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #f0f4ff;
+    --muted: #6b7a99;
+    --accent: #4f8fff;
+    --accent2: #f7c948;
+    --teal: #2dd4bf;
+    --coral: #f97066;
+    --green: #4ade80;
+    --purple: #a78bfa;
+    --font-display: 'DM Serif Display', serif;
+    --font-body: 'Outfit', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(10,14,23,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 56px;
+  }
+  .nav-logo {
+    font-family: var(--font-display);
+    font-size: 18px;
+    color: var(--text);
+    letter-spacing: -0.3px;
+  }
+  .nav-logo span { color: var(--accent); }
+  .nav-links { display: flex; gap: 1.5rem; }
+  .nav-links a {
+    color: var(--muted); font-size: 13px; text-decoration: none;
+    font-weight: 500; letter-spacing: 0.3px; transition: color .2s;
+  }
+  .nav-links a:hover { color: var(--text); }
+  .nav-tag {
+    font-family: var(--font-mono);
+    font-size: 11px; color: var(--accent2);
+    background: rgba(247,201,72,0.1);
+    border: 1px solid rgba(247,201,72,0.2);
+    padding: 3px 10px; border-radius: 20px;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    padding: 5rem 2rem 3rem;
+    max-width: 1100px; margin: 0 auto;
+    position: relative;
+  }
+  .hero-label {
+    font-family: var(--font-mono);
+    font-size: 11px; color: var(--accent);
+    letter-spacing: 2px; text-transform: uppercase;
+    margin-bottom: 1rem;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .hero-label::before {
+    content: ''; width: 24px; height: 1px; background: var(--accent);
+  }
+  h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2.2rem, 5vw, 3.8rem);
+    line-height: 1.1;
+    letter-spacing: -1px;
+    margin-bottom: 1rem;
+  }
+  h1 em { color: var(--accent); font-style: italic; }
+  .hero-sub {
+    color: var(--muted);
+    font-size: 15px;
+    max-width: 560px;
+    line-height: 1.7;
+    margin-bottom: 2.5rem;
+  }
+  .hero-meta {
+    display: flex; gap: 2rem; flex-wrap: wrap;
+  }
+  .hero-meta-item {
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .hero-meta-item .val {
+    font-family: var(--font-mono);
+    font-size: 22px; font-weight: 500; color: var(--text);
+  }
+  .hero-meta-item .lbl {
+    font-size: 12px; color: var(--muted); letter-spacing: 0.5px;
+  }
+  .divider {
+    width: 1px; height: 40px; background: var(--border2);
+    align-self: center;
+  }
+
+  /* ── SECTION ── */
+  .section {
+    max-width: 1100px; margin: 0 auto;
+    padding: 2.5rem 2rem;
+  }
+  .section-header {
+    display: flex; align-items: baseline; gap: 12px;
+    margin-bottom: 1.5rem;
+  }
+  .section-num {
+    font-family: var(--font-mono);
+    font-size: 11px; color: var(--accent);
+    background: rgba(79,143,255,0.1);
+    border: 1px solid rgba(79,143,255,0.2);
+    padding: 2px 8px; border-radius: 4px;
+    letter-spacing: 1px;
+  }
+  h2 {
+    font-family: var(--font-display);
+    font-size: 1.6rem; font-weight: 400;
+    letter-spacing: -0.5px;
+  }
+  .sep {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 0 2rem;
+  }
+
+  /* ── KPI GRID ── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 2rem;
+  }
+  .kpi {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.2rem 1.4rem;
+    position: relative; overflow: hidden;
+  }
+  .kpi::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent-line, var(--accent));
+  }
+  .kpi .k-val {
+    font-family: var(--font-mono);
+    font-size: 1.8rem; font-weight: 500;
+    color: var(--text); line-height: 1;
+    margin-bottom: 6px;
+  }
+  .kpi .k-lbl {
+    font-size: 12px; color: var(--muted);
+    letter-spacing: 0.3px;
+  }
+  .kpi .k-sub {
+    font-size: 11px; color: var(--muted);
+    margin-top: 4px; font-family: var(--font-mono);
+  }
+
+  /* ── CHART CARD ── */
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .chart-title {
+    font-size: 13px; font-weight: 500; color: var(--muted);
+    letter-spacing: 0.5px; text-transform: uppercase;
+    margin-bottom: 1rem;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 14px;
+    font-size: 12px; color: var(--muted);
+    margin-bottom: 1rem;
+  }
+  .legend span {
+    display: flex; align-items: center; gap: 6px;
+  }
+  .legend-dot {
+    width: 10px; height: 10px; border-radius: 2px;
+  }
+
+  /* ── CLASSIFICATION GRID ── */
+  .class-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 10px;
+    margin-top: 1.5rem;
+  }
+  .class-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .class-card-head {
+    display: flex; align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .class-card-name {
+    font-size: 13px; font-weight: 500; color: var(--text);
+    font-family: var(--font-mono);
+  }
+  .badge {
+    font-size: 10px; padding: 3px 9px;
+    border-radius: 20px; font-weight: 500;
+    letter-spacing: 0.5px; white-space: nowrap;
+  }
+  .badge-converter { background: rgba(79,143,255,0.15); color: #7eb0ff; border: 1px solid rgba(79,143,255,0.25); }
+  .badge-assister  { background: rgba(247,201,72,0.12); color: #f7c948; border: 1px solid rgba(247,201,72,0.2); }
+  .badge-dual      { background: rgba(45,212,191,0.12); color: #2dd4bf; border: 1px solid rgba(45,212,191,0.2); }
+  .badge-moderate  { background: rgba(107,122,153,0.15); color: #8899bb; border: 1px solid rgba(107,122,153,0.2); }
+  .class-stats {
+    display: flex; gap: 16px;
+    font-size: 12px; color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .class-stats b { color: var(--text); font-weight: 500; }
+  .class-desc { font-size: 11px; color: #4a5568; line-height: 1.5; }
+  .prog-bar {
+    height: 4px; background: rgba(255,255,255,0.06);
+    border-radius: 2px; margin-top: 8px; overflow: hidden;
+  }
+  .prog-fill {
+    height: 100%; border-radius: 2px;
+    background: var(--fill-color, var(--accent));
+  }
+
+  /* ── EMAIL TABLE ── */
+  .table-wrap {
+    overflow-x: auto;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+  }
+  table {
+    width: 100%; border-collapse: collapse;
+    font-size: 13px;
+  }
+  thead th {
+    background: var(--surface2);
+    color: var(--muted);
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 0.8px; text-transform: uppercase;
+    padding: 10px 14px; text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  tbody tr { border-bottom: 1px solid var(--border); }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: rgba(255,255,255,0.02); }
+  tbody td { padding: 10px 14px; color: var(--text); }
+  tbody td.mono { font-family: var(--font-mono); font-size: 12px; }
+  tbody td.muted { color: var(--muted); }
+  .tag-pill {
+    display: inline-block;
+    font-size: 10px; padding: 2px 8px; border-radius: 20px;
+    font-family: var(--font-mono);
+  }
+
+  /* ── INSIGHT BOX ── */
+  .insight-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 12px; margin-top: 1.5rem;
+  }
+  .insight-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent-left, var(--accent));
+    border-radius: 0 10px 10px 0;
+    padding: 1rem 1.2rem;
+  }
+  .insight-card h4 {
+    font-size: 13px; font-weight: 500;
+    color: var(--text); margin-bottom: 6px;
+  }
+  .insight-card p {
+    font-size: 12px; color: var(--muted); line-height: 1.6;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 2rem; text-align: center;
+    color: var(--muted); font-size: 12px;
+    font-family: var(--font-mono);
+    margin-top: 3rem;
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+
+  /* ── ANIMATIONS ── */
+  .fade-in {
+    opacity: 0; transform: translateY(16px);
+    transition: opacity .5s ease, transform .5s ease;
+  }
+  .fade-in.visible { opacity: 1; transform: none; }
+
+  @media (max-width: 600px) {
+    .nav-links { display: none; }
+    h1 { font-size: 2rem; }
+    .hero { padding: 3rem 1.25rem 2rem; }
+    .section { padding: 2rem 1.25rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">Attribution <span>Report</span></div>
+  <div class="nav-links">
+    <a href="#overview">Overview</a>
+    <a href="#channels">Channels</a>
+    <a href="#email">Email</a>
+    <a href="#insights">Insights</a>
+  </div>
+  <div class="nav-tag">Apr 2026</div>
+</nav>
+
+<!-- HERO -->
+<div class="hero fade-in" id="overview">
+  <div class="hero-label">Key event attribution paths</div>
+  <h1>Channel Performance<br/><em>& Attribution</em> Analysis</h1>
+  <p class="hero-sub">
+    Multi-touch path analysis across all traffic sources. Identifying which channels drive last-touch conversions versus assisted touchpoints — and what that means for budget allocation.
+  </p>
+  <div class="hero-meta">
+    <div class="hero-meta-item">
+      <span class="val">฿1.23B+</span>
+      <span class="lbl">Total attributed revenue</span>
+    </div>
+    <div class="divider"></div>
+    <div class="hero-meta-item">
+      <span class="val">300+</span>
+      <span class="lbl">Unique path combinations</span>
+    </div>
+    <div class="divider"></div>
+    <div class="hero-meta-item">
+      <span class="val">50+</span>
+      <span class="lbl">Distinct source channels</span>
+    </div>
+    <div class="divider"></div>
+    <div class="hero-meta-item">
+      <span class="val">1–20</span>
+      <span class="lbl">Touchpoints per path</span>
+    </div>
+  </div>
+</div>
+
+<hr class="sep"/>
+
+<!-- SECTION 1: TOP 10 CHANNELS -->
+<div class="section fade-in" id="channels">
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <h2>Top 10 Channels — Conversions vs Assists</h2>
+  </div>
+
+  <div class="kpi-grid" id="kpiGrid"></div>
+
+  <div class="chart-card">
+    <div class="chart-title">
+      <span>Transaction volume by channel</span>
+    </div>
+    <div class="legend">
+      <span><span class="legend-dot" style="background:#4f8fff;"></span>Last-touch conversions</span>
+      <span><span class="legend-dot" style="background:#f7c948;"></span>Assisted touches</span>
+    </div>
+    <div style="position:relative;width:100%;height:500px;">
+      <canvas id="ch10Chart" role="img" aria-label="Horizontal stacked bar chart showing top 10 channels by last-touch conversions and assisted touches. Google leads overall.">Top 10 channel attribution stacked bar chart.</canvas>
+    </div>
+  </div>
+
+  <div style="margin-top:0.5rem;margin-bottom:0.5rem;">
+    <div class="section-header" style="margin-bottom:1rem;">
+      <span style="font-size:13px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:0.5px;">Channel classification</span>
+    </div>
+  </div>
+  <div class="class-grid" id="classGrid"></div>
+</div>
+
+<hr class="sep"/>
+
+<!-- SECTION 2: EMAIL CHANNELS -->
+<div class="section fade-in" id="email">
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <h2>Email Source Attribution</h2>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi" style="--accent-line: var(--teal)">
+      <div class="k-val">12</div>
+      <div class="k-lbl">Email sources identified</div>
+    </div>
+    <div class="kpi" style="--accent-line: var(--accent)">
+      <div class="k-val">82</div>
+      <div class="k-lbl">Total email touchpoints</div>
+    </div>
+    <div class="kpi" style="--accent-line: var(--accent2)">
+      <div class="k-val">฿41.1M</div>
+      <div class="k-lbl">Email-attributed revenue</div>
+      <div class="k-sub">@ 1 USD = ฿33.5</div>
+    </div>
+    <div class="kpi" style="--accent-line: var(--coral)">
+      <div class="k-val">฿33.7M</div>
+      <div class="k-lbl">r.email.myghs.com alone</div>
+      <div class="k-sub">82% of email revenue</div>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-title"><span>Revenue by email source (฿ THB)</span></div>
+    <div class="legend">
+      <span><span class="legend-dot" style="background:#4f8fff;"></span>Touchpoints</span>
+      <span><span class="legend-dot" style="background:#2dd4bf;"></span>Revenue (THB)</span>
+    </div>
+    <div style="position:relative;width:100%;height:520px;">
+      <canvas id="emailChart" role="img" aria-label="Horizontal bar chart of 12 email sources by touchpoints and THB revenue. r.email.myghs.com dominates.">Email channel attribution chart.</canvas>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Email source</th>
+          <th>Type</th>
+          <th>Touchpoints</th>
+          <th>Revenue (THB)</th>
+          <th>Avg touch / path</th>
+        </tr>
+      </thead>
+      <tbody id="emailTableBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<hr class="sep"/>
+
+<!-- SECTION 3: INSIGHTS -->
+<div class="section fade-in" id="insights">
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <h2>Strategic Insights</h2>
+  </div>
+  <div class="insight-grid">
+    <div class="insight-card" style="--accent-left: var(--accent)">
+      <h4>Google — the universal channel</h4>
+      <p>Google appears in virtually every path as both opener and closer. Its dual role means it earns credit in both first-touch and last-touch models, making it the highest-value channel regardless of attribution methodology.</p>
+    </div>
+    <div class="insight-card" style="--accent-left: var(--accent2)">
+      <h4>GoogleHotelAds — undervalued assister</h4>
+      <p>With a high assist ratio (~65%+), Google Hotel Ads frequently surfaces in discovery paths but rarely closes alone. Last-touch models significantly undervalue its contribution to revenue — consider data-driven attribution.</p>
+    </div>
+    <div class="insight-card" style="--accent-left: var(--teal)">
+      <h4>(direct) — high-intent signal</h4>
+      <p>Direct traffic almost exclusively acts as a last-touch converter, indicating returning visitors with strong purchase intent. These are likely loyalty or CRM-driven customers already familiar with the brand.</p>
+    </div>
+    <div class="insight-card" style="--accent-left: var(--coral)">
+      <h4>Social (FB/IG) — awareness only</h4>
+      <p>Facebook, Instagram, fb, and m.facebook.com consistently appear in early path positions with high assist ratios and long days-to-conversion (7+ days). Optimise for reach and awareness KPIs, not last-touch ROAS.</p>
+    </div>
+    <div class="insight-card" style="--accent-left: var(--purple)">
+      <h4>Affilired — mid-funnel bridge</h4>
+      <p>Affilired consistently appears between Google and the final conversion step. It plays a coupon/deal surfacing role — customers discover it mid-research and use it to validate pricing before converting elsewhere.</p>
+    </div>
+    <div class="insight-card" style="--accent-left: var(--green)">
+      <h4>Email — long-cycle nurture</h4>
+      <p>Email paths average 6+ days to conversion with multi-touch sequences. The r.email.myghs.com redirect tracker dominates, suggesting email consistently warms leads that eventually convert through Google or direct channels.</p>
+    </div>
+  </div>
+</div>
+
+<footer>
+  Generated from Key Event Attribution Paths data &nbsp;·&nbsp;
+  <a href="https://github.com" target="_blank">View on GitHub</a> &nbsp;·&nbsp;
+  Powered by Chart.js &nbsp;·&nbsp; THB conversion: 1 USD = ฿33.5
+</footer>
+
+<script>
+const FX = 33.5;
+
+/* ─── RAW DATA ─── */
+const raw = [
+  {s:["(direct)"],r:77952143.37},{s:["google"],r:72215305.99},
+  {s:["google","google"],r:31714973.06},{s:["google","google","google"],r:17860424.08},
+  {s:["google","google","google","google"],r:9739323.017},
+  {s:["googlehotelads"],r:5700146.902},{s:["googlehotelads","googlehotelads"],r:3720779.665},
+  {s:["google","google","google","google","google"],r:5666163.264},
+  {s:["googlehotelads","googlehotelads","googlehotelads"],r:2073899.923},
+  {s:["bing"],r:3560043.827},
+  {s:["google","google","google","google","google","google"],r:4226174.613},
+  {s:["googlehotelads","googlehotelads","googlehotelads","googlehotelads"],r:1837394.767},
+  {s:["google","google","google","google","google","google","google"],r:2196399.09},
+  {s:["bing","bing"],r:1742149.403},{s:["go3.events.sap.com"],r:1131995.81},
+  {s:["google","google","google","google","google","google","google","google"],r:1341651.583},
+  {s:["googlehotelads","googlehotelads","googlehotelads","googlehotelads","googlehotelads"],r:824735.0202},
+  {s:["googlehotelads","googlehotelads","googlehotelads","googlehotelads","googlehotelads","googlehotelads"],r:597112.6039},
+  {s:["google","googlehotelads"],r:575475.0846},
+  {s:["facebook_instagram"],r:524100.4777},
+  {s:["google","google","google","google","google","google","google","google","google","google","google","google","google","google","google","google","google","google","google","google"],r:944910.2015},
+  {s:["google","google","google","google","google","google","google","google","google"],r:1185875.391},
+  {s:["Affilired"],r:1113195.666},{s:["bit.ly"],r:441487.1233},
+  {s:["r.email.myghs.com"],r:509608.8223},{s:["m.facebook.com"],r:171168.1955},
+  {s:["googlehotelads","googlehotelads","googlehotelads","googlehotelads","googlehotelads","googlehotelads","googlehotelads"],r:317036.6907},
+  {s:["bing","bing","bing"],r:424662.6782},{s:["fb"],r:185641.287},
+  {s:["googlehotelads","googlehotelads","googlehotelads","googlehotelads","googlehotelads","googlehotelads","googlehotelads","googlehotelads"],r:208256.754},
+  {s:["google","googlehotelads","googlehotelads"],r:434892.0875},
+  {s:["go3.events.sap.com","go3.events.sap.com"],r:402543.03},
+  {s:["google","google","google","google","google","google","google","google","google","google"],r:1289083.558},
+  {s:["google","google","googlehotelads"],r:564877.0635},
+  {s:["google","google","google","google","google","google","google","google","google","google","google"],r:328245.3842},
+  {s:["l.facebook.com"],r:148330.4748},
+  {s:["googlehotelads","google"],r:345011.9561},
+  {s:["googlehotelads","googlehotelads","googlehotelads","googlehotelads","googlehotelads","googlehotelads","googlehotelads","googlehotelads","googlehotelads"],r:393369.1733},
+  {s:["yahoo"],r:415592.6441},{s:["m.facebook.com","m.facebook.com"],r:91126.81289},
+  {s:["trivago","trivago"],r:466353.0449},{s:["Affilired","Affilired"],r:742031.6279},
+  {s:["googlehotelads","googlehotelads","googlehotelads","googlehotelads","googlehotelads","googlehotelads","googlehotelads","googlehotelads","googlehotelads","googlehotelads"],r:63517.43045},
+  {s:["google","googlehotelads","googlehotelads","googlehotelads"],r:131110.7363},
+  {s:["google","googlehotelads","google"],r:203783.545},
+  {s:["trivago","trivago","trivago"],r:333012.4904},
+  {s:["bing","bing","bing","bing"],r:340754.7943},
+  {s:["bit.ly","bit.ly"],r:343176.6112},{s:["trivago"],r:365803.3427},
+  {s:["google","google","google","google","google","google","google","google","google","google","google","google"],r:478519.5162},
+  {s:["googlehotelads","googlehotelads","google"],r:212988.4744},
+  {s:["google","google","google","google","google","google","google","google","google","google","google","google","google","google"],r:313730.7016},
+  {s:["hotel-network"],r:339256.6039},
+  {s:["r.email.myghs.com","r.email.myghs.com","r.email.myghs.com"],r:165636.62},
+  {s:["go3.events.sap.com","go3.events.sap.com","go3.events.sap.com"],r:170843.22},
+  {s:["google","google","google","google","google","google","google","google","google","google","google","google","google"],r:260284.3026},
+  {s:["google","google","googlehotelads","googlehotelads"],r:287405.9785},
+  {s:["googlehotelads","googlehotelads","googlehotelads","googlehotelads","google"],r:147700.1232},
+  {s:["google","google","Affilired","Affilired"],r:170710.78},
+  {s:["google","google","google","google","google","google","google","google","google","google","google","google","google","google","google","google","google","google","google"],r:184150.062},
+  {s:["bing","Affilired"],r:243672.2195},
+  {s:["yahoo","yahoo","yahoo"],r:288909.4161},
+  {s:["google","criteo","google","google"],r:44519.00004},
+  {s:["go3.events.sap.com","go3.events.sap.com","go3.events.sap.com","go3.events.sap.com","go3.events.sap.com"],r:62699.99998},
+  {s:["google","googlehotelads","googlehotelads","googlehotelads","googlehotelads","googlehotelads"],r:71527.03001},
+  {s:["google","googlehotelads","google","google","google"],r:100073.7},
+  {s:["r.email.myghs.com","r.email.myghs.com"],r:101760.6573},
+  {s:["googlehotelads","google","google","google"],r:152027.5672},
+  {s:["google","Affilired","Affilired"],r:161205.7447},
+  {s:["google","google","googlehotelads","google","google"],r:178141.7369},
+  {s:["Affilired","bing"],r:237134.34},
+  {s:["google","Affilired","google"],r:237682.0692},
+  {s:["yandex.ru"],r:240401.5013},
+  {s:["google","nyawebsite","nyawebsite","google","google","google","google"],r:772221.1},
+  {s:["google","nyawebsite","nyawebsite","google","google","google"],r:1081137.1},
+  {s:["bing","google"],r:304919.4},
+  {s:["facebook_instagram","facebook_instagram"],r:251327.6495},
+  {s:["google","Affilired"],r:435153.4171},
+  {s:["google","google","google","Affilired"],r:453296.0819},
+  {s:["Affilired","bing","bing"],r:29178.94697},
+  {s:["trivago","trivago","trivago","trivago"],r:216683.9041},
+  {s:["tripadvisor"],r:216756.5793},
+  {s:["bing","bing","bing","bing","bing"],r:222192.8102},
+  {s:["chatgpt.com"],r:265525.3398},
+  {s:["l.facebook.com","google"],r:24931.44277},
+  {s:["tripadvisor","tripadvisor","tripadvisor","tripadvisor"],r:360304.6479},
+  {s:["google","google","googlehotelads","google"],r:55423.41},
+  {s:["google","googlehotelads","googlehotelads","google"],r:128583.9041},
+  {s:["trivago","trivago","trivago","trivago","trivago","trivago","trivago"],r:33768.42448},
+  {s:["tripadvisor","tripadvisor","tripadvisor"],r:213023.123},
+  {s:["google","google","Affilired"],r:126402.39},
+  {s:["yandex.ru","yandex.ru"],r:167980.91},
+  {s:["naver"],r:189954.7343},
+  {s:["google","google","googlehotelads","googlehotelads","googlehotelads"],r:101470.94},
+  {s:["google","hotel-network"],r:36625.47999},
+  {s:["google","google","googlehotelads","googlehotelads","googlehotelads","googlehotelads"],r:89879.35142},
+  {s:["bing","bing","bing","bing","bing","bing"],r:171430},
+  {s:["tripadvisor","tripadvisor","tripadvisor","tripadvisor","tripadvisor","tripadvisor","tripadvisor","tripadvisor"],r:126847.9533},
+  {s:["google","mail.google.com","mail.google.com"],r:157688.2891},
+  {s:["googlehotelads","googlehotelads","google","googlehotelads","googlehotelads"],r:162323.824},
+  {s:["googlehotelads","googlehotelads","googlehotelads","googlehotelads","googlehotelads","googlehotelads","google"],r:167934.2425},
+  {s:["google","panomatics.com","google"],r:199031.75},
+  {s:["email_gift_of_travel_en_dec2025","email_gift_of_travel_en_dec2025"],r:201348.71},
+  {s:["yandex.ru","yandex.ru","yandex.ru","yandex.ru","yandex.ru"],r:209846.6251},
+  {s:["tripadvisor.com","tripadvisor.com","google"],r:214505.1249},
+  {s:["yandex.ru","yandex.ru","yandex.ru"],r:244336.75},
+  {s:["google","google","kulichki.com"],r:246093.8351},
+  {s:["bing","centarathe1","centarathe1"],r:401650.2955},
+  {s:["yahoo","yahoo"],r:113695.8746},{s:["google","bing"],r:138515.1947},
+  {s:["footer","footer"],r:97894.93},{s:["googlehotelads","hotel-network"],r:98736},
+  {s:["trivago","googlehotelads","googlehotelads"],r:100594.0338},
+  {s:["google","r.email.myghs.com"],r:16605.64001},
+  {s:["Affilired","Affilired","Affilired"],r:102480.2976},
+  {s:["tripadvisor.com"],r:60160.54162},
+  {s:["google","google","google","google","Affilired"],r:61406.58418},
+  {s:["yandex.ru","yandex.ru","yandex.ru","yandex.ru"],r:68170},
+  {s:["yandex"],r:68813.53999},
+  {s:["googlehotelads","googlehotelads","googlehotelads","googlehotelads","googlehotelads","google"],r:74702.96106},
+  {s:["r.email.myghs.com","r.email.myghs.com","r.email.myghs.com","r.email.myghs.com","r.email.myghs.com"],r:82612.62796},
+  {s:["email_centara_editions_Jan2026"],r:86671.89999},
+  {s:["google","google","google","google","google","google","google","outlook.live.com","outlook.live.com","outlook.live.com"],r:87472.19999},
+  {s:["m.search.naver.com"],r:95746.92251},
+  {s:["google","qsncc","google"],r:103058.6763},
+  {s:["(not set)","(not set)","(not set)"],r:126583.4644},
+  {s:["facebook_instagram","facebook_instagram","facebook_instagram","facebook_instagram"],r:50896.99398},
+  {s:["facebook_instagram","google","google"],r:53328.23727},
+  {s:["panomatics.com"],r:66605.99999},
+  {s:["google","google","google","google","Affilired","Affilired","Affilired"],r:77808.99999},
+  {s:["trivago","trivago","trivago","trivago","trivago"],r:78693.71168},
+  {s:["google","google","google","google","google","tripadvisor","google"],r:79985},
+  {s:["duckduckgo"],r:85878.45998},{s:["facebook"],r:97854.02398},
+  {s:["google","facebook_instagram","facebook_instagram","facebook_instagram"],r:136571.9275},
+  {s:["multiple","multiple"],r:149867.9489},
+  {s:["google","google","l.facebook.com","google","google","google","google","google"],r:11660.65997},
+  {s:["Affilired","Affilired","Affilired","Affilired"],r:22537.02301},
+  {s:["fb","google"],r:28929.49997},
+  {s:["trivago","trivago","trivago","trivago","trivago","trivago","trivago","trivago","trivago","trivago"],r:55996.92814},
+  {s:["google","google","r.email.myghs.com","google","google","google"],r:26719.67965},
+  {s:["chatgpt.com","google"],r:62532.32437},
+  {s:["google","google","Affilired","Affilired","Affilired"],r:77516.06089},
+  {s:["googlehotelads","googlehotelads","google","google","google"],r:61546.28986},
+  {s:["google","google","Affilired","bing"],r:10746.24165},
+  {s:["bing","bing","bing","bing","bing","bing","bing"],r:49195.50002},
+  {s:["bing","bing","bing","bing","bing","bing","bing","bing","bing","bing","bing","bing"],r:31330.99999},
+  {s:["bing","bing","bing","bing","bing","bing","bing","bing","bing","bing","bing","bing","bing","bing","bing","bing","bing","bing","bing","bing"],r:38319.50001},
+];
+
+/* ─── CHANNEL STATS ─── */
+const channelStats = {};
+function addCh(ch) {
+  if (!channelStats[ch]) channelStats[ch] = { closer:0, assist:0, revenue:0 };
+}
+raw.forEach(row => {
+  const n = row.s.length;
+  row.s.forEach((ch, i) => {
+    addCh(ch);
+    channelStats[ch].revenue += (row.r||0)/n;
+    if (i === n-1) channelStats[ch].closer++;
+    else channelStats[ch].assist++;
+  });
+});
+
+const sorted = Object.entries(channelStats)
+  .map(([name,d]) => ({name, total:d.closer+d.assist, ...d}))
+  .sort((a,b) => b.total - a.total)
+  .slice(0,10);
+
+/* ─── KPI CARDS ─── */
+const totalTx = sorted.reduce((s,d)=>s+d.total,0);
+const topCloser = [...sorted].sort((a,b)=>b.closer-a.closer)[0];
+const topAssist = [...sorted].sort((a,b)=>b.assist-a.assist)[0];
+const topRev = [...sorted].sort((a,b)=>b.revenue-a.revenue)[0];
+document.getElementById('kpiGrid').innerHTML = [
+  {val: totalTx.toLocaleString(), lbl:'Total touches (top 10)', sub:'', c:'var(--accent)'},
+  {val: topCloser.name, lbl:'Top last-touch converter', sub:`${topCloser.closer.toLocaleString()} conversions`, c:'var(--teal)'},
+  {val: topAssist.name, lbl:'Top assisted channel', sub:`${topAssist.assist.toLocaleString()} assists`, c:'var(--accent2)'},
+  {val: '฿'+Math.round(topRev.revenue*FX/1000000)+'M', lbl:'Top revenue channel (est.)', sub: topRev.name, c:'var(--coral)'},
+].map(k=>`
+  <div class="kpi" style="--accent-line:${k.c}">
+    <div class="k-val" style="font-size:${k.val.length>10?'1.1rem':'1.8rem'}">${k.val}</div>
+    <div class="k-lbl">${k.lbl}</div>
+    ${k.sub?`<div class="k-sub">${k.sub}</div>`:''}
+  </div>
+`).join('');
+
+/* ─── CHANNEL CHART ─── */
+const chLabels = sorted.map(d => d.name.length>16 ? d.name.slice(0,14)+'…' : d.name);
+new Chart(document.getElementById('ch10Chart'),{
+  type:'bar',
+  data:{
+    labels: chLabels,
+    datasets:[
+      {label:'Last-touch',data:sorted.map(d=>d.closer),backgroundColor:'#4f8fff',borderRadius:3},
+      {label:'Assisted',data:sorted.map(d=>d.assist),backgroundColor:'#f7c948',borderRadius:3}
+    ]
+  },
+  options:{
+    indexAxis:'y', responsive:true, maintainAspectRatio:false,
+    plugins:{
+      legend:{display:false},
+      tooltip:{
+        callbacks:{
+          afterBody:(items)=>{
+            const d = sorted[items[0].dataIndex];
+            const pct = Math.round((d.assist/d.total)*100);
+            return [`Assist ratio: ${pct}%`,`Total: ${d.total.toLocaleString()}`];
+          }
+        }
+      }
+    },
+    scales:{
+      x:{stacked:true,ticks:{color:'#6b7a99',font:{size:11}},grid:{color:'rgba(255,255,255,0.05)'}},
+      y:{stacked:true,ticks:{color:'#a0aec0',font:{size:12}},grid:{display:false}}
+    }
+  }
+});
+
+/* ─── CLASSIFICATION CARDS ─── */
+const classify = d => {
+  const ar = d.assist/d.total;
+  const cr = d.closer/d.total;
+  if (ar>0.65) return {label:'strong assister',cls:'badge-assister',desc:'Appears mostly mid-funnel; rarely the last click.',fc:'#f7c948'};
+  if (cr>0.75) return {label:'strong converter',cls:'badge-converter',desc:'Dominantly drives last-touch transactions.',fc:'#4f8fff'};
+  if (ar>0.4 && cr>0.3) return {label:'dual role',cls:'badge-dual',desc:'Healthy mix of assisting and converting.',fc:'#2dd4bf'};
+  return {label:'moderate',cls:'badge-moderate',desc:'Balanced but lower relative volume.',fc:'#6b7a99'};
+};
+
+document.getElementById('classGrid').innerHTML = sorted.map(d=>{
+  const cl = classify(d);
+  const ar = Math.round((d.assist/d.total)*100);
+  return `
+  <div class="class-card">
+    <div class="class-card-head">
+      <span class="class-card-name">${d.name.length>22?d.name.slice(0,20)+'…':d.name}</span>
+      <span class="badge ${cl.cls}">${cl.label}</span>
+    </div>
+    <div class="class-stats">
+      <span>Close: <b>${d.closer.toLocaleString()}</b></span>
+      <span>Assist: <b>${d.assist.toLocaleString()}</b></span>
+      <span>Assist%: <b>${ar}%</b></span>
+    </div>
+    <div class="class-desc">${cl.desc}</div>
+    <div class="prog-bar">
+      <div class="prog-fill" style="width:${ar}%;--fill-color:${cl.fc}"></div>
+    </div>
+  </div>`;
+}).join('');
+
+/* ─── EMAIL DATA ─── */
+const emailSources = [
+  {name:'r.email.myghs.com',type:'Redirect tracker',touchpoints:46,revenueUSD:1005490,avgPath:2.1},
+  {name:'email_gift_of_travel_en_dec2025',type:'Campaign',touchpoints:2,revenueUSD:201349,avgPath:2},
+  {name:'email_centara_editions_Jan2026',type:'Campaign',touchpoints:1,revenueUSD:86672,avgPath:1},
+  {name:'email_CentaraNewApp_jan2026',type:'Campaign',touchpoints:1,revenueUSD:43112,avgPath:2},
+  {name:'email_aplacetopause_en_apr2026',type:'Campaign',touchpoints:3,revenueUSD:25257,avgPath:1.5},
+  {name:'email_75th_Discovery_Aug2025',type:'Campaign',touchpoints:8,revenueUSD:18452,avgPath:2.4},
+  {name:'email_titf_jan2026_th',type:'Campaign',touchpoints:5,revenueUSD:8532,avgPath:3},
+  {name:'email_centara_editions_Jan2026_th',type:'Campaign',touchpoints:9,revenueUSD:5071,avgPath:5},
+  {name:'email_gift_of_travel_th_dec2025',type:'Campaign',touchpoints:1,revenueUSD:6719,avgPath:9},
+  {name:'email_11.11_en_nov2025',type:'Campaign',touchpoints:1,revenueUSD:3400,avgPath:13},
+  {name:'email_cny_cn_jan2026',type:'Campaign',touchpoints:1,revenueUSD:2,avgPath:5},
+  {name:'email_songkran2026_en_apr2026',type:'Campaign',touchpoints:4,revenueUSD:0,avgPath:8},
+].sort((a,b)=>b.revenueUSD-a.revenueUSD);
+
+/* ─── EMAIL CHART ─── */
+new Chart(document.getElementById('emailChart'),{
+  type:'bar',
+  data:{
+    labels: emailSources.map(s=>s.name.replace('email_','').replace(/_/g,' ').slice(0,28)),
+    datasets:[
+      {label:'Touchpoints',data:emailSources.map(s=>s.touchpoints),backgroundColor:'#4f8fff',borderRadius:3,yAxisID:'y',xAxisID:'x1'},
+      {label:'Revenue THB',data:emailSources.map(s=>Math.round(s.revenueUSD*FX)),backgroundColor:'#2dd4bf',borderRadius:3,yAxisID:'y',xAxisID:'x2'}
+    ]
+  },
+  options:{
+    indexAxis:'y',responsive:true,maintainAspectRatio:false,
+    plugins:{
+      legend:{display:false},
+      tooltip:{callbacks:{label:(ctx)=>{
+        if(ctx.dataset.label==='Revenue THB') return ' ฿'+ctx.raw.toLocaleString();
+        return ' Touchpoints: '+ctx.raw;
+      }}}
+    },
+    scales:{
+      y:{ticks:{color:'#a0aec0',font:{size:11},autoSkip:false},grid:{display:false}},
+      x1:{position:'top',title:{display:true,text:'Touchpoints',color:'#4f8fff',font:{size:11}},ticks:{color:'#4f8fff',font:{size:10}},grid:{color:'rgba(255,255,255,0.05)'}},
+      x2:{position:'bottom',title:{display:true,text:'Revenue (฿THB)',color:'#2dd4bf',font:{size:11}},ticks:{color:'#2dd4bf',font:{size:10},callback:v=>v>=1000000?'฿'+(v/1000000).toFixed(1)+'M':v>=1000?'฿'+(v/1000).toFixed(0)+'K':'฿'+v},grid:{display:false}}
+    }
+  }
+});
+
+/* ─── EMAIL TABLE ─── */
+const typeColors = {
+  'Redirect tracker': {bg:'rgba(249,112,102,0.15)',c:'#f97066'},
+  'Campaign':         {bg:'rgba(79,143,255,0.12)', c:'#7eb0ff'},
+};
+document.getElementById('emailTableBody').innerHTML = emailSources.map(e=>{
+  const tc = typeColors[e.type]||{bg:'rgba(107,122,153,0.15)',c:'#8899bb'};
+  const thb = Math.round(e.revenueUSD*FX);
+  return `<tr>
+    <td class="mono">${e.name}</td>
+    <td><span class="tag-pill" style="background:${tc.bg};color:${tc.c};border:1px solid ${tc.c}33">${e.type}</span></td>
+    <td>${e.touchpoints}</td>
+    <td class="mono">฿${thb.toLocaleString()}</td>
+    <td class="muted">${e.avgPath}x</td>
+  </tr>`;
+}).join('');
+
+/* ─── FADE IN OBSERVER ─── */
+const obs = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('visible'); });
+},{threshold:0.08});
+document.querySelectorAll('.fade-in').forEach(el=>obs.observe(el));
+</script>
+</body>
+</html>
